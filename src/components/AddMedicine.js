@@ -22,8 +22,8 @@ import {
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { QrReader } from 'react-qr-reader';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../services/api';
 
 const steps = ['Upload Image or Scan QR', 'Enter Details', 'Confirm'];
 
@@ -54,7 +54,7 @@ function AddMedicine() {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await axios.post('http://localhost:5000/api/medicines/extract', formData, {
+      const response = await api.post('/api/medicines/extract', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -64,7 +64,7 @@ function AddMedicine() {
       }));
       setActiveStep(1);
     } catch (err) {
-      setError('Failed to extract information from image');
+      setError(err.message || 'Failed to extract information from image');
       console.error('Error:', err);
     } finally {
       setIsProcessingImage(false);
@@ -135,7 +135,7 @@ function AddMedicine() {
 
   const handleSubmit = async () => {
     try {
-      await axios.post('http://localhost:5000/api/medicines', formData);
+      await api.post('/api/medicines', formData);
       setSuccess(true);
       setError(null);
       setFormData({
@@ -147,7 +147,7 @@ function AddMedicine() {
       setSelectedImage(null);
       setActiveStep(0);
     } catch (err) {
-      setError('Failed to add medicine');
+      setError(err.message || 'Failed to add medicine');
       console.error('Error:', err);
     }
   };
