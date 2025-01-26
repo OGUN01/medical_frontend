@@ -1,0 +1,47 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:../dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Medicine {
+  id          Int      @id @default(autoincrement())
+  name        String
+  expiryDate  DateTime
+  quantity    Int
+  batchNumber String?
+  addedAt     DateTime @default(now())
+  notified    Boolean  @default(false)
+  lastNotificationDate DateTime?
+  notifications NotificationLog[]
+}
+
+model NotificationSettings {
+  id        Int      @id @default(autoincrement())
+  email     String?
+  enableEmailNotifications Boolean @default(true)
+  enablePushNotifications Boolean @default(false)
+  notificationTime String @default("09:00") // 24-hour format
+  enableMonthlyNotifications Boolean @default(true)
+  enableWeeklyNotifications Boolean @default(true)
+  enableDailyNotifications  Boolean @default(true)
+  endpoint  String?  // For web push notifications
+  p256dh    String?  // Web push subscription keys
+  auth      String?  // Web push subscription keys
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationLog {
+  id        Int      @id @default(autoincrement())
+  medicine  Medicine @relation(fields: [medicineId], references: [id])
+  medicineId Int
+  type      String   // MONTHLY, WEEKLY, DAILY
+  sentAt    DateTime @default(now())
+  channel   String   // EMAIL, PUSH
+  status    String   // success, failed
+  message   String
+}
