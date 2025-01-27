@@ -22,7 +22,7 @@ import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import axios from 'axios';
+import api from '../services/api';
 
 function Settings() {
   const [settings, setSettings] = useState({
@@ -41,7 +41,7 @@ function Settings() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notifications/settings');
+      const response = await api.get('/api/notifications/settings');
       setSettings(response.data);
     } catch (err) {
       setError('Failed to fetch settings');
@@ -51,7 +51,7 @@ function Settings() {
 
   const fetchNotificationHistory = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notifications/history');
+      const response = await api.get('/api/notifications/history');
       setNotificationHistory(response.data);
     } catch (err) {
       setError('Failed to fetch notification history');
@@ -80,7 +80,7 @@ function Settings() {
 
   const handleSubmit = async () => {
     try {
-      await axios.post('http://localhost:5000/api/notifications/settings', settings);
+      await api.post('/api/notifications/settings', settings);
       setSuccess(true);
       setError(null);
       setTimeout(() => setSuccess(false), 3000);
@@ -100,7 +100,7 @@ function Settings() {
           applicationServerKey: process.env.REACT_APP_VAPID_PUBLIC_KEY
         });
         
-        await axios.post('http://localhost:5000/api/notifications/subscribe', subscription);
+        await api.post('/api/notifications/subscribe', subscription);
         setSettings(prev => ({ ...prev, enablePushNotifications: true }));
         setSuccess('Push notifications enabled successfully');
       }
