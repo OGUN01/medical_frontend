@@ -120,6 +120,14 @@ function Dashboard() {
     return matchesSearch && matchesStatus;
   });
 
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -237,78 +245,125 @@ function Dashboard() {
         />
       </Box>
 
-      <TableContainer 
-        component={Paper}
-        sx={{
-          overflowX: 'auto',
-          '& .MuiTable-root': {
-            minWidth: isMobile ? 'auto' : 650,
-          }
-        }}
-      >
-        <Table size={isMobile ? "small" : "medium"}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>Expiry Date</TableCell>
-              <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>Quantity</TableCell>
-              <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>Batch Number</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredMedicines.map((medicine) => (
-              <TableRow key={medicine.id}>
-                <TableCell>
-                  {medicine.name}
-                  {isMobile && (
-                    <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Expires: {new Date(medicine.expiryDate).toLocaleDateString()}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Qty: {medicine.quantity}
-                      </Typography>
-                      {medicine.batchNumber && (
-                        <Typography variant="caption" color="text.secondary">
-                          Batch: {medicine.batchNumber}
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
-                </TableCell>
-                <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>
-                  {new Date(medicine.expiryDate).toLocaleDateString()}
-                </TableCell>
-                <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>
-                  {medicine.quantity}
-                </TableCell>
-                <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>
-                  {medicine.batchNumber || '-'}
-                </TableCell>
-                <TableCell>{getStatusChip(medicine.expiryDate)}</TableCell>
-                <TableCell>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDelete(medicine.id)}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredMedicines.length === 0 && (
+      {isMobile ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {filteredMedicines.map((medicine) => (
+            <Card key={medicine.id} sx={{ 
+              width: '100%',
+              '&:hover': {
+                boxShadow: 3
+              }
+            }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                  <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold', flex: 1 }}>
+                    {medicine.name}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {getStatusChip(medicine.expiryDate)}
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleDelete(medicine.id)}
+                      sx={{ 
+                        color: 'error.main',
+                        p: 0.5
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </Box>
+                
+                <Box sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'auto 1fr',
+                  gap: '4px 12px',
+                  '& > .label': {
+                    color: 'text.secondary',
+                    fontSize: '0.875rem'
+                  },
+                  '& > .value': {
+                    fontSize: '0.875rem'
+                  }
+                }}>
+                  <Typography className="label">Expiry:</Typography>
+                  <Typography className="value">{formatDate(medicine.expiryDate)}</Typography>
+                  
+                  <Typography className="label">Quantity:</Typography>
+                  <Typography className="value">{medicine.quantity}</Typography>
+                  
+                  <Typography className="label">Batch:</Typography>
+                  <Typography className="value">{medicine.batchNumber || '-'}</Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+          {filteredMedicines.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography color="text.secondary">
+                No medicines found
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      ) : (
+        <TableContainer 
+          component={Paper}
+          sx={{
+            overflowX: 'auto',
+            '& .MuiTable-root': {
+              minWidth: 650,
+            }
+          }}
+        >
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={isMobile ? 3 : 6} align="center">
-                  No medicines found
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Expiry Date</TableCell>
+                <TableCell>Quantity</TableCell>
+                <TableCell>Batch Number</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {filteredMedicines.map((medicine) => (
+                <TableRow
+                  key={medicine.id}
+                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                >
+                  <TableCell component="th" scope="row">
+                    {medicine.name}
+                  </TableCell>
+                  <TableCell>{formatDate(medicine.expiryDate)}</TableCell>
+                  <TableCell>{medicine.quantity}</TableCell>
+                  <TableCell>{medicine.batchNumber || '-'}</TableCell>
+                  <TableCell>{getStatusChip(medicine.expiryDate)}</TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDelete(medicine.id)}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredMedicines.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                    <Typography color="text.secondary">
+                      No medicines found
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </Box>
   );
 }

@@ -5,7 +5,7 @@ let resolvedIpCache = null;
 let lastResolvedTimestamp = 0;
 const CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
-// Production API URL
+// Production API URL (fallback)
 const PRODUCTION_API_URL = 'https://medicalbackend-production-770c.up.railway.app';
 
 // Function to resolve domain using DNS-over-HTTPS
@@ -31,14 +31,19 @@ async function resolveDomain(domain) {
   }
 }
 
-// Get the base URL synchronously
+// Get the base URL with proper environment handling
 const getBaseUrl = () => {
+  // Use environment variable if available, otherwise fallback to production/local based on environment
   const url = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? PRODUCTION_API_URL : 'http://localhost:5000');
-  console.log('Initial API URL:', url, 'Environment:', process.env.NODE_ENV);
+  
+  // Log for debugging
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('API URL:', url);
+  
   return url;
 };
 
-// Create the API instance immediately with the correct base URL
+// Create the API instance with proper configuration
 const api = axios.create({
   baseURL: getBaseUrl(),
   headers: {
@@ -52,7 +57,9 @@ const api = axios.create({
 // Add request interceptor for debugging
 api.interceptors.request.use(
   (config) => {
-    console.log('Making request to:', config.url, 'with baseURL:', config.baseURL);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Making request to:', config.url, 'with baseURL:', config.baseURL);
+    }
     return config;
   },
   (error) => {
@@ -67,27 +74,32 @@ api.interceptors.response.use(
   async (error) => {
     const { config } = error;
     
-    // Log the full error for debugging
-    console.error('API Error:', {
-      url: config?.url,
-      baseURL: config?.baseURL,
-      method: config?.method,
-      error: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    });
+    // Log errors (with more detail in development)
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('API Error:', {
+        url: config?.url,
+        baseURL: config?.baseURL,
+        method: config?.method,
+        error: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+    } else {
+      console.error('API Error:', error.message);
+    }
 
-    // Handle network errors
+    // Handle network errors with retry logic
     if (!error.response) {
-      // Check if we should retry the request
       if (config && config.retry > 0) {
         config.retry -= 1;
         try {
           await new Promise(resolve => setTimeout(resolve, config.retryDelay));
-          console.log('Retrying request with baseURL:', config.baseURL);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Retrying request to:', config.url);
+          }
           return await api(config);
         } catch (retryError) {
-          console.error('Retry failed:', retryError);
+          console.error('Retry failed:', retryError.message);
         }
       }
       return Promise.reject({ 
