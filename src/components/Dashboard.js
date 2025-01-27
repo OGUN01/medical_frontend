@@ -17,7 +17,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Delete as DeleteIcon, Search as SearchIcon } from '@mui/icons-material';
-import axios from 'axios';
+import api from '../services/api';
 
 function Dashboard() {
   const [medicines, setMedicines] = useState([]);
@@ -51,7 +51,7 @@ function Dashboard() {
 
   const fetchMedicines = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/medicines');
+      const response = await api.get('/api/medicines');
       setMedicines(response.data);
       updateStats(response.data);
     } catch (err) {
@@ -66,7 +66,7 @@ function Dashboard() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/medicines/${id}`);
+      await api.delete(`/api/medicines/${id}`);
       fetchMedicines();
     } catch (err) {
       setError('Failed to delete medicine');
