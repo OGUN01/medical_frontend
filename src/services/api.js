@@ -1,9 +1,17 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Ensure the API URL always has a protocol
+const getApiUrl = () => {
+  const url = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // If no protocol is present, add https:// for production or http:// for localhost
+  return url.includes('localhost') ? `http://${url}` : `https://${url}`;
+};
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: getApiUrl(),
   headers: {
     'Content-Type': 'application/json'
   }
