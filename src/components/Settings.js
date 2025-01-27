@@ -41,14 +41,49 @@ function Settings() {
   const [notificationHistory, setNotificationHistory] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [saveState, setSaveState] = useState('idle');
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Load save state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('settingsSaveState');
+    const savedTime = localStorage.getItem('settingsSaveTime');
+    
+    if (savedState && savedTime) {
+      const timeDiff = Date.now() - parseInt(savedTime);
+      if (timeDiff < 3000) {
+        setSaveState(savedState);
+        // Set up the remaining time for the state to reset
+        const remainingTime = 3000 - timeDiff;
+        setTimeout(() => {
+          setSaveState('idle');
+          localStorage.removeItem('settingsSaveState');
+          localStorage.removeItem('settingsSaveTime');
+        }, remainingTime);
+      } else {
+        localStorage.removeItem('settingsSaveState');
+        localStorage.removeItem('settingsSaveTime');
+      }
+    }
+  }, []);
+
   const fetchSettings = useCallback(async () => {
     try {
       const response = await api.get('/api/notifications/settings');
-      setSettings(response.data);
+      // Ensure we update all settings fields
+      setSettings(prevSettings => ({
+        ...prevSettings,
+        ...response.data,
+        email: response.data.email || '',
+        enableEmailNotifications: response.data.enableEmailNotifications ?? true,
+        enablePushNotifications: response.data.enablePushNotifications ?? false,
+        notificationTime: response.data.notificationTime || '09:00',
+        enableMonthlyNotifications: response.data.enableMonthlyNotifications ?? true,
+        enableWeeklyNotifications: response.data.enableWeeklyNotifications ?? true,
+        enableDailyNotifications: response.data.enableDailyNotifications ?? true
+      }));
     } catch (err) {
       setError('Failed to fetch settings');
       console.error('Error:', err);
@@ -71,10 +106,13 @@ function Settings() {
   }, [fetchSettings, fetchNotificationHistory]);
 
   const handleSettingChange = (name) => (event) => {
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     setSettings(prev => ({
       ...prev,
-      [name]: event.target.type === 'checkbox' ? event.target.checked : event.target.value
+      [name]: value
     }));
+    // Reset save button state when settings change
+    setSaveState('idle');
   };
 
   const handleTimeChange = (newTime) => {
@@ -82,17 +120,41 @@ function Settings() {
       ...prev,
       notificationTime: dayjs(newTime).format('HH:mm')
     }));
+    // Reset save button state when time changes
+    setSaveState('idle');
   };
 
   const handleSubmit = async () => {
     try {
+      setSaveState('saving');
+      localStorage.setItem('settingsSaveState', 'saving');
+      localStorage.setItem('settingsSaveTime', Date.now().toString());
+
       await api.post('/api/notifications/settings', settings);
+      
+      // Fetch the latest settings to ensure UI is in sync
+      await fetchSettings();
+      
       setSuccess(true);
       setError(null);
-      setTimeout(() => setSuccess(false), 3000);
+      setSaveState('saved');
+      localStorage.setItem('settingsSaveState', 'saved');
+      localStorage.setItem('settingsSaveTime', Date.now().toString());
+      
+      const timer = setTimeout(() => {
+        setSuccess(false);
+        setSaveState('idle');
+        localStorage.removeItem('settingsSaveState');
+        localStorage.removeItem('settingsSaveTime');
+      }, 3000);
+
+      return () => clearTimeout(timer);
     } catch (err) {
       setError('Failed to update settings');
       console.error('Error:', err);
+      setSaveState('idle');
+      localStorage.removeItem('settingsSaveState');
+      localStorage.removeItem('settingsSaveTime');
     }
   };
 
@@ -320,13 +382,26 @@ function Settings() {
             variant="contained"
             onClick={handleSubmit}
             fullWidth={isMobile}
+            disabled={saveState === 'saving'}
             sx={{ 
               mt: 2,
               height: isMobile ? '48px' : '40px',
-              fontSize: isMobile ? '1rem' : '0.9rem'
+              fontSize: isMobile ? '1rem' : '0.9rem',
+              bgcolor: saveState === 'saved' ? 'success.main' : 
+                      saveState === 'saving' ? 'grey.400' : 'primary.main',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                bgcolor: saveState === 'saved' ? 'success.dark' : 
+                        saveState === 'saving' ? 'grey.500' : 'primary.dark',
+              },
+              '&:disabled': {
+                bgcolor: 'grey.400',
+                cursor: 'not-allowed'
+              }
             }}
           >
-            Save Settings
+            {saveState === 'saving' ? 'Saving...' : 
+             saveState === 'saved' ? 'Saved!' : 'Save Settings'}
           </Button>
         </CardContent>
       </Card>
@@ -373,55 +448,23 @@ function Settings() {
           <Table stickyHeader size={isMobile ? "small" : "medium"}>
             <TableHead>
               <TableRow>
-                <TableCell 
-                  sx={{ 
-                    backgroundColor: 'background.paper',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Date
-                </TableCell>
+                <TableCell>Date</TableCell>
                 {!isMobile && (
-                  <TableCell 
-                    sx={{ 
-                      backgroundColor: 'background.paper',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    Medicine
-                  </TableCell>
+                  <TableCell>Medicine</TableCell>
                 )}
-                <TableCell 
-                  sx={{ 
-                    backgroundColor: 'background.paper',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Type
-                </TableCell>
+                <TableCell>Type</TableCell>
                 {!isMobile && (
-                  <TableCell 
-                    sx={{ 
-                      backgroundColor: 'background.paper',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    Channel
-                  </TableCell>
+                  <>
+                    <TableCell>Channel</TableCell>
+                    <TableCell>Email</TableCell>
+                  </>
                 )}
-                <TableCell 
-                  sx={{ 
-                    backgroundColor: 'background.paper',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Status
-                </TableCell>
+                <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {notificationHistory.map((notification) => (
-                <TableRow 
+                <TableRow
                   key={notification.id}
                   sx={{
                     '&:hover': {
@@ -473,7 +516,12 @@ function Settings() {
                       )}
                     </Box>
                   </TableCell>
-                  {!isMobile && <TableCell>{notification.channel}</TableCell>}
+                  {!isMobile && (
+                    <>
+                      <TableCell>{notification.channel}</TableCell>
+                      <TableCell>{notification.email || '-'}</TableCell>
+                    </>
+                  )}
                   <TableCell>
                     <Chip
                       label={notification.status}
@@ -491,7 +539,7 @@ function Settings() {
               {notificationHistory.length === 0 && (
                 <TableRow>
                   <TableCell 
-                    colSpan={isMobile ? 3 : 5} 
+                    colSpan={isMobile ? 3 : 6} 
                     align="center"
                     sx={{ py: 8 }}
                   >
