@@ -132,8 +132,16 @@ function Settings() {
   };
 
   return (
-    <Box sx={{ pb: isMobile ? 4 : 0 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
+    <Box sx={{ 
+      pb: isMobile ? 4 : 0,
+      px: isMobile ? 2 : 0 
+    }}>
+      <Typography 
+        variant={isMobile ? "h5" : "h4"} 
+        component="h1" 
+        gutterBottom
+        sx={{ mb: 3 }}
+      >
         Notification Settings
       </Typography>
 
@@ -148,202 +156,355 @@ function Settings() {
         </Alert>
       )}
 
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <Card 
+        sx={{ 
+          mb: 4,
+          boxShadow: isMobile ? 1 : 3
+        }}
+      >
+        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+          <Typography 
+            variant={isMobile ? "subtitle1" : "h6"} 
+            gutterBottom 
+            sx={{ fontWeight: 'bold' }}
+          >
             Email Notifications
           </Typography>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: isMobile ? 4 : 3 }}>
             <TextField
               fullWidth
               label="Email Address"
               type="email"
               value={settings.email}
               onChange={handleSettingChange('email')}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiInputBase-root': {
+                  height: isMobile ? '48px' : '56px'
+                }
+              }}
             />
             <FormControlLabel
               control={
                 <Switch
                   checked={settings.enableEmailNotifications}
                   onChange={handleSettingChange('enableEmailNotifications')}
+                  sx={isMobile ? {
+                    '& .MuiSwitch-switchBase': {
+                      padding: '8px',
+                    }
+                  } : {}}
                 />
               }
               label="Enable Email Notifications"
+              sx={{ 
+                '& .MuiFormControlLabel-label': {
+                  fontSize: isMobile ? '0.9rem' : '1rem'
+                }
+              }}
             />
           </Box>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 3 : 2 }} />
 
-          <Typography variant="h6" gutterBottom>
+          <Typography 
+            variant={isMobile ? "subtitle1" : "h6"} 
+            gutterBottom
+            sx={{ fontWeight: 'bold' }}
+          >
             Push Notifications
           </Typography>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: isMobile ? 4 : 3 }}>
             <FormControlLabel
               control={
                 <Switch
                   checked={settings.enablePushNotifications}
                   onChange={handleSettingChange('enablePushNotifications')}
+                  sx={isMobile ? {
+                    '& .MuiSwitch-switchBase': {
+                      padding: '8px',
+                    }
+                  } : {}}
                 />
               }
               label="Enable Push Notifications"
+              sx={{ 
+                '& .MuiFormControlLabel-label': {
+                  fontSize: isMobile ? '0.9rem' : '1rem'
+                }
+              }}
             />
             {!settings.enablePushNotifications && (
               <Button
                 variant="outlined"
                 onClick={requestPushPermission}
-                sx={{ ml: 2 }}
+                sx={{ 
+                  ml: 2,
+                  height: isMobile ? '36px' : '40px',
+                  fontSize: isMobile ? '0.875rem' : '0.9rem'
+                }}
               >
                 Enable Browser Notifications
               </Button>
             )}
           </Box>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: isMobile ? 3 : 2 }} />
 
-          <Typography variant="h6" gutterBottom>
+          <Typography 
+            variant={isMobile ? "subtitle1" : "h6"} 
+            gutterBottom
+            sx={{ fontWeight: 'bold' }}
+          >
             Notification Schedule
           </Typography>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: isMobile ? 4 : 3 }}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <TimePicker
                 label="Notification Time"
                 value={dayjs(`2024-01-01T${settings.notificationTime}`)}
                 onChange={handleTimeChange}
-                sx={{ mb: 2, width: '100%' }}
+                sx={{ 
+                  mb: 3,
+                  width: '100%',
+                  '& .MuiInputBase-root': {
+                    height: isMobile ? '48px' : '56px'
+                  }
+                }}
               />
             </LocalizationProvider>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.enableDailyNotifications}
-                    onChange={handleSettingChange('enableDailyNotifications')}
-                  />
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: isMobile ? 2 : 1 
+            }}>
+              {[
+                {
+                  key: 'enableDailyNotifications',
+                  label: 'Daily Notifications (for medicines expiring tomorrow)'
+                },
+                {
+                  key: 'enableWeeklyNotifications',
+                  label: 'Weekly Notifications (for medicines expiring this week)'
+                },
+                {
+                  key: 'enableMonthlyNotifications',
+                  label: 'Monthly Notifications (for medicines expiring this month)'
                 }
-                label="Daily Notifications (for medicines expiring tomorrow)"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.enableWeeklyNotifications}
-                    onChange={handleSettingChange('enableWeeklyNotifications')}
-                  />
-                }
-                label="Weekly Notifications (for medicines expiring this week)"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.enableMonthlyNotifications}
-                    onChange={handleSettingChange('enableMonthlyNotifications')}
-                  />
-                }
-                label="Monthly Notifications (for medicines expiring this month)"
-              />
+              ].map(({ key, label }) => (
+                <FormControlLabel
+                  key={key}
+                  control={
+                    <Switch
+                      checked={settings[key]}
+                      onChange={handleSettingChange(key)}
+                      sx={isMobile ? {
+                        '& .MuiSwitch-switchBase': {
+                          padding: '8px',
+                        }
+                      } : {}}
+                    />
+                  }
+                  label={label}
+                  sx={{ 
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: isMobile ? '0.9rem' : '1rem'
+                    }
+                  }}
+                />
+              ))}
             </Box>
           </Box>
 
           <Button
             variant="contained"
             onClick={handleSubmit}
-            sx={{ mt: 2 }}
+            fullWidth={isMobile}
+            sx={{ 
+              mt: 2,
+              height: isMobile ? '48px' : '40px',
+              fontSize: isMobile ? '1rem' : '0.9rem'
+            }}
           >
             Save Settings
           </Button>
         </CardContent>
       </Card>
 
-      <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-        Notification History
-      </Typography>
-      <TableContainer 
-        component={Paper} 
+      <Typography 
+        variant={isMobile ? "h6" : "h5"} 
+        gutterBottom 
         sx={{ 
-          maxHeight: isMobile ? 'calc(100vh - 600px)' : 400,
-          '.MuiTableCell-root': isMobile ? {
-            padding: '8px',
-            fontSize: '0.875rem',
-          } : {},
+          mt: 4,
+          mb: 2,
+          fontWeight: isMobile ? 'medium' : 'regular'
         }}
       >
-        <Table stickyHeader size={isMobile ? "small" : "medium"}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              {!isMobile && <TableCell>Medicine</TableCell>}
-              <TableCell>Type</TableCell>
-              {!isMobile && <TableCell>Channel</TableCell>}
-              <TableCell>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {notificationHistory.map((notification) => (
-              <TableRow 
-                key={notification.id}
-                sx={{
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                  {isMobile 
-                    ? new Date(notification.sentAt).toLocaleDateString()
-                    : new Date(notification.sentAt).toLocaleString()
-                  }
-                  {isMobile && (
-                    <Typography variant="caption" display="block" color="text.secondary">
-                      {notification.medicine.name}
-                    </Typography>
-                  )}
-                </TableCell>
-                {!isMobile && <TableCell>{notification.medicine.name}</TableCell>}
-                <TableCell>
-                  <Chip
-                    label={formatNotificationType(notification.type)}
-                    size="small"
-                    sx={{
-                      fontSize: isMobile ? '0.75rem' : '0.875rem',
-                      height: isMobile ? '24px' : '32px',
-                    }}
-                  />
-                  {isMobile && (
-                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
-                      {notification.channel}
-                    </Typography>
-                  )}
-                </TableCell>
-                {!isMobile && <TableCell>{notification.channel}</TableCell>}
-                <TableCell>
-                  <Chip
-                    label={notification.status}
-                    color={getStatusColor(notification.status)}
-                    size="small"
-                    sx={{
-                      fontSize: isMobile ? '0.75rem' : '0.875rem',
-                      height: isMobile ? '24px' : '32px',
-                    }}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-            {notificationHistory.length === 0 && (
+        Notification History
+      </Typography>
+      
+      <Box sx={{ 
+        position: 'relative',
+        height: isMobile ? 'calc(100vh - 800px)' : '400px',
+        minHeight: '200px',
+        overflow: 'hidden'
+      }}>
+        <TableContainer 
+          component={Paper} 
+          sx={{ 
+            height: '100%',
+            overflow: 'auto',
+            boxShadow: isMobile ? 1 : 3,
+            '& .MuiTableCell-root': isMobile ? {
+              padding: '12px 8px',
+              fontSize: '0.875rem',
+              whiteSpace: 'nowrap'
+            } : {},
+            '&::-webkit-scrollbar': {
+              width: '8px',
+              height: '8px'
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(0,0,0,0.2)',
+              borderRadius: '4px'
+            }
+          }}
+        >
+          <Table stickyHeader size={isMobile ? "small" : "medium"}>
+            <TableHead>
               <TableRow>
                 <TableCell 
-                  colSpan={isMobile ? 3 : 5} 
-                  align="center"
-                  sx={{ py: 4 }}
+                  sx={{ 
+                    backgroundColor: 'background.paper',
+                    fontWeight: 'bold'
+                  }}
                 >
-                  <Typography color="text.secondary">
-                    No notification history available
-                  </Typography>
+                  Date
+                </TableCell>
+                {!isMobile && (
+                  <TableCell 
+                    sx={{ 
+                      backgroundColor: 'background.paper',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Medicine
+                  </TableCell>
+                )}
+                <TableCell 
+                  sx={{ 
+                    backgroundColor: 'background.paper',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Type
+                </TableCell>
+                {!isMobile && (
+                  <TableCell 
+                    sx={{ 
+                      backgroundColor: 'background.paper',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Channel
+                  </TableCell>
+                )}
+                <TableCell 
+                  sx={{ 
+                    backgroundColor: 'background.paper',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Status
                 </TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {notificationHistory.map((notification) => (
+                <TableRow 
+                  key={notification.id}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    },
+                    cursor: 'pointer'
+                  }}
+                >
+                  <TableCell>
+                    <Box>
+                      {isMobile 
+                        ? new Date(notification.sentAt).toLocaleDateString()
+                        : new Date(notification.sentAt).toLocaleString()
+                      }
+                      {isMobile && (
+                        <Typography 
+                          variant="caption" 
+                          display="block" 
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {notification.medicine.name}
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                  {!isMobile && <TableCell>{notification.medicine.name}</TableCell>}
+                  <TableCell>
+                    <Box>
+                      <Chip
+                        label={formatNotificationType(notification.type)}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        sx={{
+                          fontSize: isMobile ? '0.75rem' : '0.875rem',
+                          height: isMobile ? '24px' : '32px',
+                        }}
+                      />
+                      {isMobile && (
+                        <Typography 
+                          variant="caption" 
+                          display="block" 
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {notification.channel}
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                  {!isMobile && <TableCell>{notification.channel}</TableCell>}
+                  <TableCell>
+                    <Chip
+                      label={notification.status}
+                      color={getStatusColor(notification.status)}
+                      size="small"
+                      sx={{
+                        fontSize: isMobile ? '0.75rem' : '0.875rem',
+                        height: isMobile ? '24px' : '32px',
+                        minWidth: '70px'
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+              {notificationHistory.length === 0 && (
+                <TableRow>
+                  <TableCell 
+                    colSpan={isMobile ? 3 : 5} 
+                    align="center"
+                    sx={{ py: 8 }}
+                  >
+                    <Typography color="text.secondary">
+                      No notification history available
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </Box>
   );
 }
