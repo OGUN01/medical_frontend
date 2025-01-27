@@ -17,6 +17,9 @@ import {
   TableRow,
   Paper,
   Divider,
+  useTheme,
+  useMediaQuery,
+  Chip,
 } from '@mui/material';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -38,6 +41,9 @@ function Settings() {
   const [notificationHistory, setNotificationHistory] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -110,8 +116,23 @@ function Settings() {
     }
   };
 
+  // Helper function to format notification type for mobile
+  const formatNotificationType = (type) => {
+    switch(type) {
+      case 'DAILY': return 'Daily';
+      case 'WEEKLY': return 'Weekly';
+      case 'MONTHLY': return 'Monthly';
+      default: return type;
+    }
+  };
+
+  // Helper function to get status color
+  const getStatusColor = (status) => {
+    return status === 'success' ? 'success' : 'error';
+  };
+
   return (
-    <Box>
+    <Box sx={{ pb: isMobile ? 4 : 0 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Notification Settings
       </Typography>
@@ -236,35 +257,90 @@ function Settings() {
       <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
         Notification History
       </Typography>
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          maxHeight: isMobile ? 'calc(100vh - 600px)' : 400,
+          '.MuiTableCell-root': isMobile ? {
+            padding: '8px',
+            fontSize: '0.875rem',
+          } : {},
+        }}
+      >
+        <Table stickyHeader size={isMobile ? "small" : "medium"}>
           <TableHead>
             <TableRow>
               <TableCell>Date</TableCell>
-              <TableCell>Medicine</TableCell>
+              {!isMobile && <TableCell>Medicine</TableCell>}
               <TableCell>Type</TableCell>
-              <TableCell>Channel</TableCell>
+              {!isMobile && <TableCell>Channel</TableCell>}
               <TableCell>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {notificationHistory.map((notification) => (
-              <TableRow key={notification.id}>
-                <TableCell>
-                  {new Date(notification.sentAt).toLocaleString()}
+              <TableRow 
+                key={notification.id}
+                sx={{
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                }}
+              >
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  {isMobile 
+                    ? new Date(notification.sentAt).toLocaleDateString()
+                    : new Date(notification.sentAt).toLocaleString()
+                  }
+                  {isMobile && (
+                    <Typography variant="caption" display="block" color="text.secondary">
+                      {notification.medicine.name}
+                    </Typography>
+                  )}
                 </TableCell>
-                <TableCell>{notification.medicine.name}</TableCell>
-                <TableCell>{notification.type}</TableCell>
-                <TableCell>{notification.channel}</TableCell>
+                {!isMobile && <TableCell>{notification.medicine.name}</TableCell>}
                 <TableCell>
-                  <Typography
-                    color={notification.status === 'success' ? 'success.main' : 'error.main'}
-                  >
-                    {notification.status}
-                  </Typography>
+                  <Chip
+                    label={formatNotificationType(notification.type)}
+                    size="small"
+                    sx={{
+                      fontSize: isMobile ? '0.75rem' : '0.875rem',
+                      height: isMobile ? '24px' : '32px',
+                    }}
+                  />
+                  {isMobile && (
+                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {notification.channel}
+                    </Typography>
+                  )}
+                </TableCell>
+                {!isMobile && <TableCell>{notification.channel}</TableCell>}
+                <TableCell>
+                  <Chip
+                    label={notification.status}
+                    color={getStatusColor(notification.status)}
+                    size="small"
+                    sx={{
+                      fontSize: isMobile ? '0.75rem' : '0.875rem',
+                      height: isMobile ? '24px' : '32px',
+                    }}
+                  />
                 </TableCell>
               </TableRow>
             ))}
+            {notificationHistory.length === 0 && (
+              <TableRow>
+                <TableCell 
+                  colSpan={isMobile ? 3 : 5} 
+                  align="center"
+                  sx={{ py: 4 }}
+                >
+                  <Typography color="text.secondary">
+                    No notification history available
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
