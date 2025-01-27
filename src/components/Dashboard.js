@@ -15,6 +15,8 @@ import {
   TableRow,
   Paper,
   Alert,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { Delete as DeleteIcon, Search as SearchIcon } from '@mui/icons-material';
 import api from '../services/api';
@@ -29,6 +31,9 @@ function Dashboard() {
     expiringThisMonth: 0,
     valid: 0
   });
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const updateStats = useCallback((medicineList) => {
     const now = new Date();
@@ -121,8 +126,21 @@ function Dashboard() {
         Medicine Dashboard
       </Typography>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 4, position: 'relative' }}>
-        <Box sx={{ position: 'absolute', top: -40, right: 0 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        mb: 4, 
+        position: 'relative',
+        flexDirection: isMobile ? 'column' : 'row' 
+      }}>
+        <Box sx={{ 
+          position: isMobile ? 'static' : 'absolute',
+          top: -40, 
+          right: 0,
+          mb: isMobile ? 2 : 0,
+          display: 'flex',
+          justifyContent: isMobile ? 'center' : 'flex-end'
+        }}>
           <Chip
             label="All"
             onClick={() => setSelectedStatus(null)}
@@ -152,7 +170,9 @@ function Dashboard() {
           onClick={() => handleStatusClick('expiringSoon')}
         >
           <CardContent>
-            <Typography variant="h6">Expiring Soon: {stats.expiringSoon}</Typography>
+            <Typography variant={isMobile ? "subtitle1" : "h6"}>
+              Expiring Soon: {stats.expiringSoon}
+            </Typography>
           </CardContent>
         </Card>
         <Card 
@@ -170,7 +190,9 @@ function Dashboard() {
           onClick={() => handleStatusClick('expiringThisMonth')}
         >
           <CardContent>
-            <Typography variant="h6">Expiring This Month: {stats.expiringThisMonth}</Typography>
+            <Typography variant={isMobile ? "subtitle1" : "h6"}>
+              Expiring This Month: {stats.expiringThisMonth}
+            </Typography>
           </CardContent>
         </Card>
         <Card 
@@ -188,7 +210,9 @@ function Dashboard() {
           onClick={() => handleStatusClick('valid')}
         >
           <CardContent>
-            <Typography variant="h6">Valid: {stats.valid}</Typography>
+            <Typography variant={isMobile ? "subtitle1" : "h6"}>
+              Valid: {stats.valid}
+            </Typography>
           </CardContent>
         </Card>
       </Box>
@@ -209,17 +233,26 @@ function Dashboard() {
           InputProps={{
             startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
           }}
+          sx={{ mb: isMobile ? 2 : 0 }}
         />
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer 
+        component={Paper}
+        sx={{
+          overflowX: 'auto',
+          '& .MuiTable-root': {
+            minWidth: isMobile ? 'auto' : 650,
+          }
+        }}
+      >
+        <Table size={isMobile ? "small" : "medium"}>
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Expiry Date</TableCell>
-              <TableCell>Quantity</TableCell>
-              <TableCell>Batch Number</TableCell>
+              <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>Expiry Date</TableCell>
+              <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>Quantity</TableCell>
+              <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>Batch Number</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -227,10 +260,33 @@ function Dashboard() {
           <TableBody>
             {filteredMedicines.map((medicine) => (
               <TableRow key={medicine.id}>
-                <TableCell>{medicine.name}</TableCell>
-                <TableCell>{new Date(medicine.expiryDate).toLocaleDateString()}</TableCell>
-                <TableCell>{medicine.quantity}</TableCell>
-                <TableCell>{medicine.batchNumber || '-'}</TableCell>
+                <TableCell>
+                  {medicine.name}
+                  {isMobile && (
+                    <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Expires: {new Date(medicine.expiryDate).toLocaleDateString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Qty: {medicine.quantity}
+                      </Typography>
+                      {medicine.batchNumber && (
+                        <Typography variant="caption" color="text.secondary">
+                          Batch: {medicine.batchNumber}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </TableCell>
+                <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>
+                  {new Date(medicine.expiryDate).toLocaleDateString()}
+                </TableCell>
+                <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>
+                  {medicine.quantity}
+                </TableCell>
+                <TableCell sx={{ display: isMobile ? 'none' : 'table-cell' }}>
+                  {medicine.batchNumber || '-'}
+                </TableCell>
                 <TableCell>{getStatusChip(medicine.expiryDate)}</TableCell>
                 <TableCell>
                   <IconButton
@@ -245,7 +301,7 @@ function Dashboard() {
             ))}
             {filteredMedicines.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={isMobile ? 3 : 6} align="center">
                   No medicines found
                 </TableCell>
               </TableRow>
